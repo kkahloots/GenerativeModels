@@ -159,7 +159,7 @@ class AEModel(BaseModel):
                 print('TRAIN | AE Loss: ', loss_tr, ' | Recons: ', recons_tr, ' | L2_loss: ', L2_loss)
                 print('VALID | AE Loss: ', loss_val, ' | Recons: ', recons_val)
                 
-                if(cur_epoch % 15 == 0):
+                if(cur_epoch-1 % 15 == 0):
                     self.save(session, saver, self.model_graph.global_step_tensor.eval(session))
                     if self.plot:
                         self.generate_samples(data_train, session, cur_epoch)
@@ -242,7 +242,7 @@ class AEModel(BaseModel):
     '''    
            
     def animate(self):
-        if not hasattr(self, 'z_space_files'):
+        if not hasattr(self, 'z_space_files') or len(self.recons_files)==0:
             print('No images were generated during trainning!')
             
             path = self.summary_dir
@@ -267,6 +267,7 @@ class AEModel(BaseModel):
         path = self.summary_dir
         st = path+'\\{} samples generation in epoch'.format(self.summary_dir.split('\\')[-1:][0])
         images = [PILImage.open(fn) for fn in self.recons_files]
+
         images[0].save(st+'_animate.gif', save_all=True, append_images=images[1:], duration=len(images)*60, loop=0xffff)
         with open(st+'_animate.gif','rb') as f:
             img1 = Image(data=f.read(), format='gif')
