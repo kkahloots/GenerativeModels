@@ -5,6 +5,7 @@ AECNN = 1
 
 # Stopping tolerance
 tol = 1e-6
+SAVE_EPOCH=20
 
 def get_model_name(model, config):
     if model=='AE' or model=='AECNN':

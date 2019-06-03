@@ -32,3 +32,34 @@ class AECNN(AE_BASE):
                                restore=self.flags.restore, plot=self.flags.plot, model_type=self.config.model_type)
         print('building AECNN Model...')
         print('\nNumber of trainable paramters', self.model.trainable_count)
+    
+    def animate(self):
+        return self.model.animate()
+
+    '''  
+    ------------------------------------------------------------------------------
+                                         MODEL OPERATIONS
+    ------------------------------------------------------------------------------ 
+    '''    
+              
+    def encode(self, inputs):
+        '''  ------------------------------------------------------------------------------
+                                         DATA PROCESSING
+        ------------------------------------------------------------------------------ '''           
+        inputs = utils.prepare_dataset(inputs) 
+        return self.model.encode(inputs)
+        
+    def decode(self, z):
+        return self.model.decode(z)
+     
+    def interpolate(self, input1, input2):
+        input1 = utils.prepare_dataset(input1)
+        input2 = utils.prepare_dataset(input2)         
+        return self.model.interpolate(input1, input2)
+
+    def reconst_loss(self, inputs):
+        '''  ------------------------------------------------------------------------------
+                                         DATA PROCESSING
+        ------------------------------------------------------------------------------ '''           
+        inputs = utils.prepare_dataset(inputs) 
+        return self.model.reconst_loss(inputs)        

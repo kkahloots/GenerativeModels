@@ -29,7 +29,8 @@ import _utils.utils as utils
 import _utils.constants as const
 
 from sklearn.decomposition import PCA
-from _utils.plots import plot_dataset, plot_samples, merge
+from _utils.plots import plot_dataset, plot_samples, merge, resize_gif
+import moviepy.editor as mp
 
 class AEModel(BaseModel):
     def __init__(self,network_params, sigma_act=tf.nn.softplus,
@@ -159,7 +160,7 @@ class AEModel(BaseModel):
                 print('TRAIN | AE Loss: ', loss_tr, ' | Recons: ', recons_tr, ' | L2_loss: ', L2_loss)
                 print('VALID | AE Loss: ', loss_val, ' | Recons: ', recons_val)
                 
-                if(cur_epoch-1 % 15 == 0):
+                if (cur_epoch==1) or ((cur_epoch % const.SAVE_EPOCH == 0) and ((cur_epoch!=0))):
                     self.save(session, saver, self.model_graph.global_step_tensor.eval(session))
                     if self.plot:
                         self.generate_samples(data_train, session, cur_epoch)
@@ -269,13 +270,23 @@ class AEModel(BaseModel):
         images = [PILImage.open(fn) for fn in self.recons_files]
 
         images[0].save(st+'_animate.gif', save_all=True, append_images=images[1:], duration=len(images)*60, loop=0xffff)
-        with open(st+'_animate.gif','rb') as f:
+        clip = mp.VideoFileClip(st+'_animate.gif')
+        clip.write_videofile(st+'_animate.mp4')
+        
+        
+        images[0].save(st+'_res_animate.gif', save_all=True, append_images=images[1:], duration=len(images)*60, loop=0xffff, dpi=70)
+        with open(st+'_res_animate.gif','rb') as f:
             img1 = Image(data=f.read(), format='gif')
+
         
         st = path+'\\{} Z space in epoch'.format(self.summary_dir.split('\\')[-1:][0])
         images = [PILImage.open(fn) for fn in self.z_space_files]
-        images[0].save(st+'_animate.gif', save_all=True, append_images=images[1:], duration=len(images)*60, loop=0xffff)
-        with open(st+'_animate.gif','rb') as f:
+        images[0].save(st+'_animate.gif', save_all=True, append_images=images[1:], duration=len(images)*60, loop=0xffff, dpi=70)
+        clip = mp.VideoFileClip(st+'_animate.gif')
+        clip.write_videofile(st+'_animate.mp4')
+        
+        resize_gif(path=st+'_animate.gif', save_as=st+'_res_animate.gif', resize_to=(900,450))
+        with open(st+'_res_animate.gif','rb') as f:
             img2 = Image(data=f.read(), format='gif')
         
         return img1, img2

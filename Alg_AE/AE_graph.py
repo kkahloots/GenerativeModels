@@ -140,10 +140,10 @@ class AEGraph(BaseGraph):
 
         with tf.variable_scope("L2_loss", reuse=self.reuse):
             tv = tf.trainable_variables()
-            self.regularization_cost = tf.reduce_sum([ tf.nn.l2_loss(v) for v in tv ])
+            self.L2_loss = tf.reduce_sum([ tf.nn.l2_loss(v) for v in tv ])
         
         with tf.variable_scope("ae_loss", reuse=self.reuse):
-            self.ae_loss = tf.reduce_mean(self.reconstruction)  + self.l2*self.regularization_cost # shape = [None,]
+            self.ae_loss = tf.reduce_mean(self.reconstruction)  + self.l2*self.L2_loss # shape = [None,]
 
         with tf.variable_scope("optimizer" ,reuse=self.reuse):
             self.optimizer = tf .train.AdamOptimizer(self.learning_rate)
@@ -166,13 +166,13 @@ class AEGraph(BaseGraph):
     '''
     
     def partial_fit(self, session, x):
-        tensors = [self.train_step, self.ae_loss, self.loss_reconstruction_m, self.regularization_cost]
+        tensors = [self.train_step, self.ae_loss, self.loss_reconstruction_m, self.L2_loss]
         feed_dict = {self.x_batch: x}
         _, loss, recons, L2_loss  = session.run(tensors, feed_dict=feed_dict)
         return loss, recons, L2_loss
     
     def evaluate(self, session, x):
-        tensors = [self.ae_loss, self.loss_reconstruction_m, self.regularization_cost]
+        tensors = [self.ae_loss, self.loss_reconstruction_m, self.L2_loss]
         feed_dict = {self.x_batch: x}
         loss, recons, L2_loss  = session.run(tensors, feed_dict=feed_dict)
         return loss, recons, L2_loss
