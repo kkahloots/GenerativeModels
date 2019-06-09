@@ -1,5 +1,6 @@
+import dask.array as da
 import numpy as np
-
+import dask
 
 class Dataset:
     def __init__(self, data, labels):
@@ -13,7 +14,7 @@ class Dataset:
         self.width = data.shape[1]
         self.num_channels = data.shape[3]
         self._idx_batch = 0
-        self._idx_vector = np.array(range(self._ndata))        
+        self._idx_vector = da.array(range(self._ndata))
     
 
 
@@ -27,9 +28,9 @@ class Dataset:
     
     def set_flat(self, flat):
         if(not flat):
-            self._x = np.reshape(self._x, [-1, self.height, self.width, self._num_channels])
+            self._x = da.reshape(self._x, [-1, self.height, self.width, self._num_channels])
         else:
-            self._x = np.reshape(
+            self._x = da.reshape(
                 self._x, [-1, self.height * self.width * self._num_channels])
 
 
@@ -40,10 +41,11 @@ class Dataset:
     
     def shuffle(self, revert=False):
         if(revert == False):
-            self._idx_vector = np.random.permutation(range(self._ndata))
+            self._idx_vector = da.random.permutation(range(self._ndata))
         else:
-            self._idx_vector = np.array(range(self._ndata))
-    
+            self._idx_vector = da.array(range(self._ndata))
+
+
     def shuffle_data(self, idx):
         self._x = self._x[idx]
         self._labels = self._labels[idx]
@@ -52,8 +54,8 @@ class Dataset:
         start = self._idx_batch
         if start == 0:
             if(shuffle):
-                idx = np.arange(0, self._ndata)  # get all possible indexes
-                np.random.shuffle(idx)  # shuffle indexe
+                idx = da.arange(0, self._ndata)  # get all possible indexes
+                np.random.shuffle(idx.compute())  # shuffle indexe
                 self.shuffle_data(idx)
         # go to the next batch
         if start + batch_size > self._ndata:
@@ -63,8 +65,8 @@ class Dataset:
             labels_rest_part = self._labels[start:self._ndata]
             
             if(shuffle):
-                idx0 = np.arange(0, self._ndata)  # get all possible indexes
-                np.random.shuffle(idx0)  # shuffle indexes
+                idx0 = da.arange(0, self._ndata)  # get all possible indexes
+                np.random.shuffle(idx0.compute())  # shuffle indexes
                 self.shuffle_data(idx0)
 
             start = 0
@@ -76,10 +78,10 @@ class Dataset:
             labels_new_part = self._labels[start:end]
             
             if not with_labels:
-                yield np.concatenate((x_rest_part, x_new_part), axis=0) 
+                yield da.concatenate((x_rest_part, x_new_part), axis=0)
             else:
-                yield np.concatenate((x_rest_part, x_new_part), axis=0),\
-                      np.concatenate((labels_rest_part, labels_new_part), axis=0)
+                yield da.concatenate((x_rest_part, x_new_part), axis=0), \
+                      da.concatenate((labels_rest_part, labels_new_part), axis=0)
             
         else:
             self._idx_batch += batch_size
@@ -95,17 +97,17 @@ class Dataset:
         self._ndata = n
         self._x = self._x[0:self._ndata]
         self._labels = self._labels[0:n]
-        self._idx_vector = np.array(range(self._ndata))
+        self._idx_vector = da.array(range(self._ndata))
 
             
     def random_batch(self, batch_size):
-        idx = np.arange(0, self._ndata) 
-        np.random.shuffle(idx)
+        idx = da.arange(0, self._ndata)
+        np.random.shuffle(idx.compute())
         
         return self._x[idx[:batch_size]]
     
     def random_batch_with_labels(self, batch_size):
-        idx = np.arange(0, self._ndata) 
-        np.random.shuffle(idx)
+        idx = da.arange(0, self._ndata)
+        np.random.shuffle(idx.compute())
         
         return self._x[idx[:batch_size]], self._labels[idx[:batch_size]]
