@@ -3,11 +3,13 @@ import math
 import random
 import pprint
 import scipy.misc
-import numpy as np
+#import numpy as da
+import dask.array as da
+import dask.dataframe as dd
 from time import gmtime, strftime
 from six.moves import xrange
 import matplotlib.pyplot as plt
-import pandas as pd
+#import pandas as pd
 
 import re
 import os
@@ -38,41 +40,41 @@ def prepare_dataset(X):
     len_ = X.shape[0]
     shape_ = X.shape
 
-    d = int(np.sqrt(X.flatten().reshape(X.shape[0],-1).shape[1]))
+    d = int(da.sqrt(X.flatten().reshape(X.shape[0], -1).shape[1]))
 
     if len(shape_)==4:
-        X = np.reshape(X, [-1, d, d, 3])
+        X = da.reshape(X, [-1, d, d, 3])
         
     elif d==shape_[1] and len(shape_)==3:
-        X = np.reshape(X, [-1, d, d])       
-        X = np.array(list(map(lambda x: grey2rgb(x), X)), dtype=np.float32)
+        X = da.reshape(X, [-1, d, d])
+        X = da.array(list(map(lambda x: grey2rgb(x), X)), dtype=da.float32)
 
     else:
         r = d**2 - X.shape[1]
-        train_padding = np.zeros((shape_[0], r))
-        X = np.vstack([X, train_padding])
+        train_padding = da.zeros((shape_[0], r))
+        X = da.vstack([X, train_padding])
         
-        X = np.reshape(X, [-1, d, d])
-        X = np.array(list(map(lambda x: grey2rgb(x), X)), dtype=np.float32)
+        X = da.reshape(X, [-1, d, d])
+        X = da.array(list(map(lambda x: grey2rgb(x), X)), dtype=da.float32)
     
     print('Scaling dataset')
     if scalar is not None:
-        X = scaler.transform(X.flatten().reshape(-1,1).astype(np.float32)).reshape(X.shape)
+        X = scaler.transform(X.flatten().reshape(-1,1).astype(da.float32)).reshape(X.shape)
     else:
         scaler = MinMaxScaler()
-        X = scaler.fit_transform(X.flatten().reshape(-1,1).astype(np.float32)).reshape(X.shape)
+        X = scaler.fit_transform(X.flatten().reshape(-1,1).astype(da.float32)).reshape(X.shape)
         
     return X
     
 def process_data(X, y=None, test_size=0.20, dummies=False):
     if y is None:
-        y = np.ones(X.shape[0])
+        y = da.ones(X.shape[0])
     
     len_ = X.shape[0]    
     X = prepare_dataset(X)
         
     if dummies:
-        y = pd.get_dummies(y).values
+        y = dd.get_dummies(y)
         
     shape_  = list(X.shape[1:])
     
@@ -89,18 +91,18 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     
     samples = list()
     for _ in range(10):
-        for y_uniq in np.unique(train_dataset.labels):
+        for y_uniq in da.unique(train_dataset.labels):
             samples.append(train_dataset.x[train_dataset.labels==y_uniq][random.randint(0,len(train_dataset.x[train_dataset.labels==y_uniq])-1)])
     
-    train_dataset.samples = np.array(samples)
+    train_dataset.samples = da.array(samples)
     return train_dataset, test_dataset
 
 
 def merge_datasets(data, data_dim, train_size, valid_size=0):
-    valid_dataset = np.ndarray((valid_size, data_dim), dtype=np.float32)
-    train_dataset = np.ndarray((train_size, data_dim), dtype=np.float32)
+    valid_dataset = da.ndarray((valid_size, data_dim), dtype=da.float32)
+    train_dataset = da.ndarray((train_size, data_dim), dtype=da.float32)
 
-    np.random.shuffle(data)
+    da.random.shuffle(data)
 
     if valid_dataset is not None:
         valid_dataset = data[:valid_size, :]
@@ -280,7 +282,7 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 # TensorFlow Graph visualizer code
-import numpy as np
+import numpy as da
 from IPython.display import clear_output, Image, display, HTML
 
 def strip_consts(graph_def, max_const_size=32):
@@ -312,7 +314,7 @@ def show_graph(graph_def, max_const_size=32):
         <div style="height:600px">
           <tf-graph-basic id="{id}"></tf-graph-basic>
         </div>
-    """.format(data=repr(str(strip_def)), id='graph'+str(np.random.rand()))
+    """.format(data=repr(str(strip_def)), id='graph'+str(da.random.rand()))
 
     iframe = """
         <iframe seamless style="width:1200px;height:620px;border:0" srcdoc="{}"></iframe>

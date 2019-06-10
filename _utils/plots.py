@@ -1,4 +1,6 @@
-import numpy as np
+#import numpy as da
+import dask.array as da
+
 import random
 from scipy.misc import imresize
 import pandas as pd
@@ -21,7 +23,7 @@ def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     # get the separating hyperplane
     w = clf.coef_[0]
     a = -w[0] / w[1]
-    xx = np.linspace(min_x - 5, max_x + 5)  # make sure the line is long enough
+    xx = da.linspace(min_x - 5, max_x + 5)  # make sure the line is long enough
     yy = a * xx - (clf.intercept_[0]) / w[1]
     plt.plot(xx, yy, linestyle, label=label, linewidth=2)
 
@@ -33,11 +35,11 @@ def plot_subfigure(X, Y, subplot, transform):
     else:
         raise ValueError
 
-    min_x = np.min(X[:, 0])
-    max_x = np.max(X[:, 0])
+    min_x = da.min(X[:, 0])
+    max_x = da.max(X[:, 0])
 
-    min_y = np.min(X[:, 1])
-    max_y = np.max(X[:, 1])
+    min_y = da.min(X[:, 1])
+    max_y = da.max(X[:, 1])
 
     classif = OneVsRestClassifier(LogisticRegression())
     classif.fit(X, Y)
@@ -48,8 +50,8 @@ def plot_subfigure(X, Y, subplot, transform):
     plt.subplot(1, 2, subplot)    
     plt.scatter(X[:, 0], X[:, 1], s=15, c='gray', edgecolors=(0, 0, 0))
     
-    for i in np.unique(Y.argmax(axis=1)):
-        class_ = np.where(Y[:, i])
+    for i in da.unique(Y.argmax(axis=1)):
+        class_ = da.where(Y[:, i])
         plt.scatter(X[class_, 0], X[class_, 1], s=25,  linewidths=2, label='Class {}'.format(str(i)))
     
     for i in range(len(classif.estimators_)):
@@ -63,7 +65,7 @@ def plot_subfigure(X, Y, subplot, transform):
     
 def plot_transform_hyperplanes(X, y, save=None):
     
-    plt.figure(figsize=(27,9), dpi=200)
+    plt.figure(figsize=(27,9), dpi=100)
 
     plot_subfigure(X, y, 1, 'cca')
     plot_subfigure(X, y, 2, 'pca')
@@ -87,14 +89,14 @@ from matplotlib import offsetbox
 # Scale and visualize the embedding vectors
 def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_original=None):
     print('data size {}'.format(X.shape))
-    uni_y = len(np.unique(y))
+    uni_y = len(da.unique(y).compute())
     
-    x_min, x_max = np.min(X, 0), np.max(X, 0)
+    x_min, x_max = da.min(X, 0), da.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
     #if save is not None:
         #plt.figure(figsize=(27,18), dpi=600)
     #else:
-    fig = plt.figure(figsize=(27,18), dpi=200) 
+    fig = plt.figure(figsize=(27,18), dpi=100)
     ax = plt.subplot(111)
 
     for i in tqdm(range(X.shape[0])):
@@ -106,10 +108,10 @@ def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_origin
     if images is not None:
         if hasattr(offsetbox, 'AnnotationBbox'):
             # only print thumbnails with matplotlib > 1.0
-            shown_images = np.array([[1., 1.]])  # just something big
+            shown_images = da.array([[1., 1.]])  # just something big
             for i in range(X.shape[0]):
-                dist = np.sum((X[i] - shown_images) ** 2, 1)
-                if np.min(dist) < 4e-3:
+                dist = da.sum((X[i] - shown_images) ** 2, 1)
+                if da.min(dist) < 4e-3:
                     # don't show points that are too close
                     continue
                 
@@ -119,9 +121,9 @@ def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_origin
                     else:
                         plt.text(X[i, 0]-0.01, X[i, 1]-0.033, labels[y[i]], fontdict={'weight': 'bold', 'size': 15})
                 
-                shown_images = np.r_[shown_images, [X[i]]]
+                shown_images = da.r_[shown_images, [X[i]]]
                 if gray:
-                    image_ =  offsetbox.OffsetImage(np.expand_dims(util.invert(images[i]), axis=0))
+                    image_ =  offsetbox.OffsetImage(da.expand_dims(util.invert(images[i]), axis=0))
                 else:
                     image_ =  offsetbox.OffsetImage(images[i], cmap=plt.cm.gray_r)
                 
@@ -156,7 +158,7 @@ def plot_samples(samples, scale=5, save=None):
     
     im = imresize(im, (fig_width, fig_height))
     
-    fig = plt.figure(dpi=200) 
+    fig = plt.figure(dpi=100)
     ax = plt.subplot(111)
     plt.imshow(im)
     for item in [fig, ax]:
@@ -182,14 +184,14 @@ def merge(images, size):
     #images = pick_n(images, 100)
     if (images.shape[3] in (3,4)):
         c = images.shape[-1:][0]
-        img = np.zeros((h * size[0], w * size[1], c))
+        img = da.zeros((h * size[0], w * size[1], c))
         for idx, image in enumerate(images):
             i = idx % size[1]
             j = idx // size[1]
             img[j * h:j * h + h, i * w:i * w + w, :] = image
         return img
     elif images.shape[3]==1:
-        img = np.zeros((h * size[0], w * size[1]))
+        img = da.zeros((h * size[0], w * size[1]))
         for idx, image in enumerate(images):
             i = idx % size[1]
             j = idx // size[1]
