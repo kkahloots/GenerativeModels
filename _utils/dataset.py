@@ -68,7 +68,7 @@ class Dataset:
                 self.shuffle_data(idx0)
 
             start = 0
-            # avoid the case where the #sample != integar times of batch_size
+            # avoid the case where the #sample != integer times of batch_size
             self._idx_batch = batch_size - rest_ndata
             end = self._idx_batch
             
